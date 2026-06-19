@@ -25,7 +25,6 @@ export function ExpenseForm({
   onAddCategory,
   categories = EXPENSE_CATEGORIES,
 }: ExpenseFormProps) {
-  console.log("ExpenseForm props:", { onAddCategory, categories });
   const { formData, errors, isSubmitting, handleChange, handleSubmit } =
     useExpenseForm({
       initialData,
@@ -118,6 +117,7 @@ export function ExpenseForm({
         error={errors.date}
         fullWidth
         required
+        max={new Date().toISOString().split('T')[0]}
       />
 
       <div style={buttonGroupStyle}>

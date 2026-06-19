@@ -102,7 +102,6 @@ const HistoryPage: React.FC = () => {
   };
 
   const handleAddCategory = () => {
-    console.log("handleAddCategory called");
     setIsCategoryModalOpen(true);
   };
 
@@ -112,7 +111,7 @@ const HistoryPage: React.FC = () => {
       await createCategory(categoryName);
       await loadCategories(); // Refresh the category list
       setIsCategoryModalOpen(false);
-      // Show success feedback (you could add a toast notification here)
+      
       console.log(`Category "${categoryName}" created successfully!`);
     } catch (error) {
       console.error("Error creating category:", error);

@@ -10,8 +10,11 @@ import { CategoryModal } from "../components/CategoryModal";
 import { Modal, Button } from "../vibes";
 import { COLORS } from "../constants/colors";
 import { EXPENSE_CATEGORIES } from "../constants/categories";
+import { Toast } from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 const HistoryPage: React.FC = () => {
+  const { messages, removeToast, showSuccess, showError } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,8 +98,10 @@ const HistoryPage: React.FC = () => {
       await createExpense(data);
       setIsModalOpen(false);
       fetchExpenses();
+      showSuccess("Expense created successfully! ✅");
     } catch (error) {
       console.error("Error creating expense:", error);
+      showError("Failed to create expense. Please try again.");
       throw error;
     }
   };
@@ -111,10 +116,10 @@ const HistoryPage: React.FC = () => {
       await createCategory(categoryName);
       await loadCategories(); // Refresh the category list
       setIsCategoryModalOpen(false);
-      
-      console.log(`Category "${categoryName}" created successfully!`);
+      showSuccess(`Category "${categoryName}" created successfully! ✅`);
     } catch (error) {
       console.error("Error creating category:", error);
+      showError(`Failed to create category "${categoryName}". Please try again.`);
       throw error;
     } finally {
       setIsCreatingCategory(false);
@@ -237,6 +242,7 @@ const HistoryPage: React.FC = () => {
         onCategoryCreated={handleCategoryCreated}
         isCreating={isCreatingCategory}
       />
+      <Toast messages={messages} onRemove={removeToast} />
     </div>
   );
 };

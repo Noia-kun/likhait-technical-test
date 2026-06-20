@@ -3,6 +3,8 @@ puts "Clearing existing data..."
 Expense.destroy_all
 Category.destroy_all
 
+payer_names = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Lee', 'Emily Chen']
+
 # Create categories
 puts "Creating categories..."
 categories = [
@@ -145,6 +147,7 @@ while current_date <= end_date
         description: template[:description],
         amount: amount,
         category: category,
+        payer_name: payer_names.sample,
         date: current_date,
         created_at: current_date,
         updated_at: current_date

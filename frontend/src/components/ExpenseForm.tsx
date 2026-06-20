@@ -13,6 +13,8 @@ interface ExpenseFormProps {
   onSubmit: (data: ExpenseFormData) => Promise<void>;
   onCancel?: () => void;
   submitLabel?: string;
+  onAddCategory?: () => void;
+  categories?: string[];
 }
 
 export function ExpenseForm({
@@ -20,6 +22,8 @@ export function ExpenseForm({
   onSubmit,
   onCancel,
   submitLabel = "Add Expense",
+  onAddCategory,
+  categories = EXPENSE_CATEGORIES,
 }: ExpenseFormProps) {
   const { formData, errors, isSubmitting, handleChange, handleSubmit } =
     useExpenseForm({
@@ -39,7 +43,13 @@ export function ExpenseForm({
     marginTop: "0.5rem",
   };
 
-  const categoryOptions = EXPENSE_CATEGORIES.map((category) => ({
+  const categorySelectStyle: React.CSSProperties = {
+    display: "flex",
+    gap: "0.5rem",
+    alignItems: "flex-end",
+  };
+
+  const categoryOptions = categories.map((category) => ({
     value: category,
     label: category,
   }));
@@ -69,15 +79,35 @@ export function ExpenseForm({
         required
       />
 
-      <SelectBox
-        label="Category"
-        options={categoryOptions}
-        value={formData.category}
-        onChange={(e) => handleChange("category", e.target.value)}
-        error={errors.category}
-        fullWidth
-        required
-      />
+      <div style={categorySelectStyle}>
+        <div style={{ flex: 1 }}>
+          <SelectBox
+            label="Category"
+            options={categoryOptions}
+            value={formData.category}
+            onChange={(e) => handleChange("category", e.target.value)}
+            error={errors.category}
+            fullWidth
+            required
+          />
+        </div>
+        {onAddCategory && (
+          <Button
+            type="button"
+            variant="primary"
+            onClick={onAddCategory}
+            style={{ 
+              marginBottom: "0.5rem", 
+              minWidth: "80px", 
+              height: "40px",
+              fontSize: "14px",
+              fontWeight: "bold"
+            }}
+          >
+            + New
+          </Button>
+        )}
+      </div>
 
       <TextField
         label="Date"
@@ -87,6 +117,7 @@ export function ExpenseForm({
         error={errors.date}
         fullWidth
         required
+        max={new Date().toISOString().split('T')[0]}
       />
 
       <div style={buttonGroupStyle}>

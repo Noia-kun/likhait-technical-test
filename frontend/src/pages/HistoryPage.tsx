@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { getExpenses, createExpense } from "../services/api";
-import { Expense, ExpenseFormData } from "../types";
+import { getExpenses, createExpense, fetchCategories, createCategory } from "../services/api";
+import { Expense, ExpenseFormData, Category } from "../types";
 import YearNavigation from "../components/YearNavigation";
 import { MonthNavigation } from "../components/MonthNavigation";
 import CategoryBreakdown from "../components/CategoryBreakdown";
 import { CalendarExpenseTable } from "../components/CalendarExpenseTable";
 import { ExpenseForm } from "../components/ExpenseForm";
+import { CategoryModal } from "../components/CategoryModal";
 import { Modal, Button } from "../vibes";
 import { COLORS } from "../constants/colors";
+import { EXPENSE_CATEGORIES } from "../constants/categories";
+import { Toast } from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 const HistoryPage: React.FC = () => {
+  const { messages, removeToast, showSuccess, showError } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [categories, setCategories] = useState<string[]>(EXPENSE_CATEGORIES);
 
   // Get year and month from URL params, default to current date if not provided
   const getInitialYearMonth = () => {
@@ -45,9 +53,23 @@ const HistoryPage: React.FC = () => {
     updateURL(selectedYear, selectedMonth);
   }, []);
 
+  // Load categories on mount
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
   useEffect(() => {
     fetchExpenses();
   }, [selectedYear, selectedMonth]);
+
+  const loadCategories = async () => {
+    try {
+      const data = await fetchCategories();
+      setCategories(data.map(cat => cat.name));
+    } catch (error) {
+      console.error("Error loading categories:", error);
+    }
+  };
 
   const fetchExpenses = async () => {
     try {
@@ -76,9 +98,31 @@ const HistoryPage: React.FC = () => {
       await createExpense(data);
       setIsModalOpen(false);
       fetchExpenses();
+      showSuccess("Expense created successfully! ✅");
     } catch (error) {
       console.error("Error creating expense:", error);
+      showError("Failed to create expense. Please try again.");
       throw error;
+    }
+  };
+
+  const handleAddCategory = () => {
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCategoryCreated = async (categoryName: string) => {
+    try {
+      setIsCreatingCategory(true);
+      await createCategory(categoryName);
+      await loadCategories(); // Refresh the category list
+      setIsCategoryModalOpen(false);
+      showSuccess(`Category "${categoryName}" created successfully! ✅`);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      showError(`Failed to create category "${categoryName}". Please try again.`);
+      throw error;
+    } finally {
+      setIsCreatingCategory(false);
     }
   };
 
@@ -96,11 +140,11 @@ const HistoryPage: React.FC = () => {
     {} as Record<string, { category: string; amount: number; count: number }>,
   );
 
-  const categories = Object.values(categoryData).sort(
+  const categoriesForBreakdown = Object.values(categoryData).sort(
     (a, b) => b.amount - a.amount,
   );
-  const total = categories.reduce((sum, cat) => sum + cat.amount, 0);
-  const totalCount = categories.reduce((sum, cat) => sum + cat.count, 0);
+  const total = categoriesForBreakdown.reduce((sum, cat) => sum + cat.amount, 0);
+  const totalCount = categoriesForBreakdown.reduce((sum, cat) => sum + cat.count, 0);
 
   const pageStyle: React.CSSProperties = {
     padding: "48px 64px",
@@ -165,7 +209,7 @@ const HistoryPage: React.FC = () => {
         ) : (
           <>
             <CategoryBreakdown
-              categories={categories}
+              categories={categoriesForBreakdown}
               total={total}
               totalCount={totalCount}
             />
@@ -187,8 +231,18 @@ const HistoryPage: React.FC = () => {
         <ExpenseForm
           onSubmit={handleAddExpense}
           onCancel={() => setIsModalOpen(false)}
+          onAddCategory={handleAddCategory}
+          categories={categories}
         />
       </Modal>
+
+      <CategoryModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        onCategoryCreated={handleCategoryCreated}
+        isCreating={isCreatingCategory}
+      />
+      <Toast messages={messages} onRemove={removeToast} />
     </div>
   );
 };

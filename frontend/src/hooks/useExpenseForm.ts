@@ -47,6 +47,17 @@ export function useExpenseForm({ initialData, onSubmit }: UseExpenseFormProps) {
 
     if (!formData.date) {
       newErrors.date = "Date is required";
+    } else {
+      // Check if date is in the future
+      const selectedDate = new Date(formData.date);
+      const today = new Date();
+      // Reset both dates to start of day for fair comparison
+      selectedDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate > today) {
+        newErrors.date = "Cannot select a future date. Please select today or a past date.";
+      }
     }
 
     setErrors(newErrors);
